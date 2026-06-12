@@ -7,9 +7,11 @@ RUN npm run build
 
 FROM nginx:alpine
 COPY --from=build /app/dist /usr/share/nginx/html
+# Store as a template; custom entrypoint substitutes only ${NGINX_API_URL}
 COPY nginx.conf /etc/nginx/templates/default.conf.template
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
 EXPOSE 3000
-# nginx official image runs /docker-entrypoint.d/ which calls envsubst on *.template files
-# NGINX_API_URL defaults to local docker-compose service; override for Render/prod
 ENV NGINX_API_URL=http://api:8000
+ENTRYPOINT ["/docker-entrypoint.sh"]
 CMD ["nginx", "-g", "daemon off;"]
