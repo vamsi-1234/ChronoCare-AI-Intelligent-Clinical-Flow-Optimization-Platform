@@ -12,6 +12,9 @@ from fastapi.responses import JSONResponse
 
 from app.api.routes import router
 from app.api.appointments_routes import router as appointments_router
+from app.api.auth_routes import router as auth_router
+from app.api.patients_routes import router as patients_router
+from app.api.users_routes import router as users_router
 from app.db.database import init_db
 from app.ml.models import load_models
 from app.utils.logging_config import setup_logging
@@ -28,6 +31,11 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     # Initialise database tables
     try:
         init_db()
+        # Seed default admin user if DB is empty
+        from app.db.database import SessionLocal
+        from app.services.auth import seed_admin_user
+        with SessionLocal() as db:
+            seed_admin_user(db)
     except Exception as exc:  # noqa: BLE001
         logger.error("DB init failed (non-fatal): %s", exc)
 
@@ -53,9 +61,12 @@ app = FastAPI(
     lifespan=lifespan,
     openapi_tags=[
         {"name": "System", "description": "Health and status"},
+        {"name": "Auth", "description": "Login, register, user management"},
         {"name": "Predictions", "description": "Duration and no-show ML predictions"},
         {"name": "Scheduling", "description": "Simulation, optimisation, waiting time"},
         {"name": "Appointments", "description": "Daily appointment management and assessment"},
+        {"name": "Patients", "description": "Patient records and visit history"},
+        {"name": "Users", "description": "User management (admin only)"},
     ],
 )
 
@@ -96,6 +107,9 @@ async def global_exception_handler(request: Request, exc: Exception) -> JSONResp
 
 app.include_router(router)
 app.include_router(appointments_router)
+app.include_router(auth_router)
+app.include_router(patients_router)
+app.include_router(users_router)
 
 
 # ── Root redirect to docs ──────────────────────────────────────────────────

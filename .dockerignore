@@ -1,0 +1,15 @@
+**/__pycache__
+**/*.pyc
+**/*.pyo
+.venv
+.env
+*.db
+*.db-shm
+*.db-wal
+data/
+models/
+.git
+.github
+frontend/node_modules
+frontend/dist
+.DS_Store

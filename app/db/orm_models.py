@@ -10,15 +10,77 @@ from sqlalchemy import (
     Boolean,
     CheckConstraint,
     Column,
+    Date,
     Float,
     ForeignKey,
     Integer,
     String,
     DateTime,
+    Text,
 )
 from sqlalchemy.orm import relationship
 
 from app.db.database import Base
+
+
+# ── Users (authentication) ────────────────────────────────────────────────
+
+class User(Base):
+    """Platform user — physician, front desk staff, or admin."""
+    __tablename__ = "platform_users"
+
+    id              = Column(Integer, primary_key=True, autoincrement=True)
+    email           = Column(String(255), unique=True, nullable=False, index=True)
+    hashed_password = Column(String(255), nullable=False)
+    full_name       = Column(String(200), nullable=False)
+    role            = Column(String(30), nullable=False, default="front_desk")
+    # role: admin | physician | front_desk
+    physician_id    = Column(String(50), nullable=True, index=True)
+    # physician_id links a physician-role user to their DailyAppointmentRecord rows
+    is_active       = Column(Boolean, default=True)
+    created_at      = Column(DateTime, default=datetime.utcnow)
+    updated_at      = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+# ── Patients (real patient records) ──────────────────────────────────────
+
+class FullPatient(Base):
+    """A real clinic patient with demographics and contact info."""
+    __tablename__ = "clinic_patients"
+
+    id               = Column(Integer, primary_key=True, autoincrement=True)
+    patient_code     = Column(String(50), unique=True, nullable=False, index=True)
+    # patient_code is the human-readable ID used on the board (e.g. P0023)
+    full_name        = Column(String(200), nullable=False)
+    date_of_birth    = Column(String(10), nullable=True)   # YYYY-MM-DD
+    gender           = Column(String(20), nullable=True)
+    contact_phone    = Column(String(30), nullable=True)
+    contact_email    = Column(String(255), nullable=True)
+    address          = Column(Text, nullable=True)
+    created_at       = Column(DateTime, default=datetime.utcnow)
+    updated_at       = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    visit_history    = relationship("PatientVisitHistory", back_populates="patient",
+                                    cascade="all, delete-orphan")
+
+
+class PatientVisitHistory(Base):
+    """Each past visit for a patient — used to compute no-show features."""
+    __tablename__ = "patient_visit_history"
+
+    id               = Column(Integer, primary_key=True, autoincrement=True)
+    patient_id       = Column(Integer, ForeignKey("clinic_patients.id"), nullable=False,
+                               index=True)
+    visit_date       = Column(String(10), nullable=False)   # YYYY-MM-DD
+    visit_type       = Column(String(20), default="follow-up")
+    specialty        = Column(String(100), nullable=True)
+    physician_id     = Column(String(50), nullable=True)
+    attended         = Column(Boolean, nullable=False, default=True)
+    actual_duration  = Column(Integer, nullable=True)       # minutes
+    notes            = Column(Text, nullable=True)
+    created_at       = Column(DateTime, default=datetime.utcnow)
+
+    patient          = relationship("FullPatient", back_populates="visit_history")
 
 
 class Patient(Base):
@@ -94,6 +156,7 @@ class DailyAppointmentRecord(Base):
 
     appointment_id    = Column(String(50), primary_key=True, index=True)
     patient_id        = Column(String(50), nullable=False, index=True)
+    patient_name      = Column(String(200), nullable=True)   # from FullPatient.full_name
     physician_id      = Column(String(50), nullable=False, index=True)
     date              = Column(String(10), nullable=False, index=True)  # YYYY-MM-DD
     scheduled_start   = Column(String(30), nullable=False)

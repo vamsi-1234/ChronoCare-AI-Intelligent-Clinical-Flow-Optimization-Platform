@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import {
   Box, Drawer, AppBar, Toolbar, Typography, List, ListItem,
   ListItemButton, ListItemIcon, ListItemText, Divider, useTheme,
-  useMediaQuery, IconButton,
+  useMediaQuery, IconButton, Avatar, Chip, Tooltip,
 } from '@mui/material';
 import { useLocation, useNavigate } from 'react-router-dom';
 import DashboardIcon from '@mui/icons-material/Dashboard';
@@ -13,18 +13,26 @@ import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 import EventNoteIcon from '@mui/icons-material/EventNote';
 import MenuIcon from '@mui/icons-material/Menu';
 import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
+import LogoutIcon from '@mui/icons-material/Logout';
 import SystemStatus from './SystemStatus';
+import { useAuth } from '../contexts/AuthContext';
 
 const DRAWER_WIDTH = 240;
 
-const NAV_ITEMS = [
-  { label: 'Dashboard',          path: '/',                 icon: <DashboardIcon /> },
-  { label: 'Daily Board',        path: '/appointments',     icon: <EventNoteIcon /> },
-  { label: 'Predict Duration',   path: '/predict-duration', icon: <TimerIcon /> },
-  { label: 'No-Show Risk',       path: '/predict-noshow',   icon: <PersonOffIcon /> },
-  { label: 'Simulate Day',       path: '/simulate-day',     icon: <CalendarMonthIcon /> },
-  { label: 'Optimize Schedule',  path: '/optimize',         icon: <AutoFixHighIcon /> },
+const ALL_NAV_ITEMS = [
+  { label: 'Dashboard',         path: '/',                 icon: <DashboardIcon />,            roles: ['admin','physician','front_desk'] },
+  { label: 'Daily Board',       path: '/appointments',     icon: <EventNoteIcon />,            roles: ['admin','physician','front_desk'] },
+  { label: 'Predict Duration',  path: '/predict-duration', icon: <TimerIcon />,                roles: ['admin','physician','front_desk'] },
+  { label: 'No-Show Risk',      path: '/predict-noshow',   icon: <PersonOffIcon />,            roles: ['admin','physician','front_desk'] },
+  { label: 'Simulate Day',      path: '/simulate-day',     icon: <CalendarMonthIcon />,        roles: ['admin','physician','front_desk'] },
+  { label: 'Optimize Schedule', path: '/optimize',         icon: <AutoFixHighIcon />,          roles: ['admin','physician','front_desk'] },
+  { label: 'Admin',             path: '/admin',            icon: <AdminPanelSettingsIcon />,   roles: ['admin'] },
 ];
+
+const roleColor: Record<string, 'error' | 'primary' | 'success'> = {
+  admin: 'error', physician: 'primary', front_desk: 'success',
+};
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const theme = useTheme();
@@ -32,6 +40,16 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
+
+  const navItems = ALL_NAV_ITEMS.filter(
+    (item) => !user || item.roles.includes(user.role)
+  );
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   const drawer = (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -48,7 +66,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       </Box>
       <Divider />
       <List sx={{ flex: 1, pt: 1 }}>
-        {NAV_ITEMS.map((item) => {
+        {navItems.map((item) => {
           const active = location.pathname === item.path;
           return (
             <ListItem key={item.path} disablePadding>
@@ -73,6 +91,24 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         })}
       </List>
       <Divider />
+      {/* User info + logout */}
+      {user && (
+        <Box sx={{ p: 1.5 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+            <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.main', fontSize: 14 }}>
+              {user.full_name.charAt(0).toUpperCase()}
+            </Avatar>
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Typography variant="body2" noWrap sx={{ fontWeight: 600 }}>{user.full_name}</Typography>
+              <Chip label={user.role.replace('_', ' ')} color={roleColor[user.role]} size="small" sx={{ height: 18, fontSize: 10 }} />
+            </Box>
+            <Tooltip title="Sign out">
+              <IconButton size="small" onClick={handleLogout}><LogoutIcon fontSize="small" /></IconButton>
+            </Tooltip>
+          </Box>
+        </Box>
+      )}
+      <Divider />
       <Box sx={{ p: 1.5 }}>
         <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
           System Status
@@ -84,7 +120,6 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default' }}>
-      {/* Mobile AppBar */}
       {isMobile && (
         <AppBar position="fixed" elevation={1} sx={{ zIndex: theme.zIndex.drawer + 1 }}>
           <Toolbar>
@@ -97,7 +132,6 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         </AppBar>
       )}
 
-      {/* Sidebar */}
       {isMobile ? (
         <Drawer
           variant="temporary"
@@ -120,16 +154,9 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         </Drawer>
       )}
 
-      {/* Main content */}
       <Box
         component="main"
-        sx={{
-          flex: 1,
-          p: { xs: 2, md: 3 },
-          pt: isMobile ? '80px' : 3,
-          maxWidth: '100%',
-          overflow: 'auto',
-        }}
+        sx={{ flex: 1, p: { xs: 2, md: 3 }, pt: isMobile ? '80px' : 3, maxWidth: '100%', overflow: 'auto' }}
       >
         {children}
       </Box>

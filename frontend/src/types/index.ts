@@ -149,6 +149,7 @@ export interface HealthResponse {
 export interface DayAppointment {
   appointment_id: string;
   patient_id: string;
+  patient_name?: string | null;
   physician_id: string;
   date: string;
   scheduled_start: string;
@@ -191,4 +192,75 @@ export interface AssessAllResponse {
   high_risk_count: number;
   total_predicted_minutes: number;
   appointments: DayAppointment[];
+}
+
+// ── Patients ──────────────────────────────────────────────────────────────
+
+export interface Patient {
+  id: number;
+  patient_code: string;
+  full_name: string;
+  date_of_birth: string | null;
+  gender: string | null;
+  contact_phone: string | null;
+  contact_email: string | null;
+  address: string | null;
+  created_at: string | null;
+  visit_count: number;
+  no_show_count: number;
+  no_show_streak: number;
+  days_since_last_visit: number | null;
+}
+
+export interface PatientCreate {
+  full_name: string;
+  date_of_birth?: string;
+  gender?: string;
+  contact_phone?: string;
+  contact_email?: string;
+  address?: string;
+}
+
+export interface VisitHistoryEntry {
+  id: number;
+  visit_date: string;
+  visit_type: string;
+  specialty: string | null;
+  physician_id: string | null;
+  attended: boolean;
+  actual_duration: number | null;
+  notes: string | null;
+}
+
+// ── Users ─────────────────────────────────────────────────────────────────
+
+export interface UserOut {
+  id: number;
+  email: string;
+  full_name: string;
+  role: 'admin' | 'physician' | 'front_desk';
+  physician_id: string | null;
+  is_active: boolean;
+}
+
+export interface UpdateUserRequest {
+  full_name?: string;
+  role?: string;
+  physician_id?: string;
+  is_active?: boolean;
+  password?: string;
+}
+
+// ── Appointments Create ───────────────────────────────────────────────────
+
+export interface CreateAppointmentRequest {
+  patient_id: string;
+  patient_name?: string;
+  physician_id: string;
+  scheduled_start: string;
+  visit_type: string;
+  specialty: string;
+  age: number;
+  comorbidity_count: number;
+  priority: number;
 }
