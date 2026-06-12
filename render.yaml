@@ -41,3 +41,5 @@ services:
       # Points nginx proxy to the public API service URL on Render
       - key: NGINX_API_URL
         value: https://chronocare-api.onrender.com
+      - key: NGINX_API_HOST
+        value: chronocare-api.onrender.com

@@ -13,5 +13,6 @@ COPY docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
 EXPOSE 3000
 ENV NGINX_API_URL=http://api:8000
+ENV NGINX_API_HOST=api
 ENTRYPOINT ["/docker-entrypoint.sh"]
 CMD ["nginx", "-g", "daemon off;"]
