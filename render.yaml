@@ -26,7 +26,7 @@ services:
       - key: LOG_LEVEL
         value: INFO
       - key: CORS_ORIGINS
-        value: https://chronocare-frontend.onrender.com
+        value: https://chronocare-frontend.onrender.com,http://localhost:3000
 
   # ── Frontend ─────────────────────────────────────────────────────────────────
   - type: web
@@ -36,5 +36,6 @@ services:
     dockerfilePath: ./frontend/Dockerfile
     plan: free
     envVars:
-      - key: VITE_API_URL
+      # Points nginx proxy to the public API service URL on Render
+      - key: NGINX_API_URL
         value: https://chronocare-api.onrender.com
