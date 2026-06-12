@@ -17,6 +17,11 @@ logger = logging.getLogger(__name__)
 
 DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./chronocare.db")
 
+# Render (and some other PaaS) still issue legacy "postgres://" URLs.
+# SQLAlchemy 2.0 requires "postgresql://" — fix it transparently.
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
 # SQLite needs check_same_thread=False; PostgreSQL does not
 _connect_args: dict[str, Any] = (
     {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
