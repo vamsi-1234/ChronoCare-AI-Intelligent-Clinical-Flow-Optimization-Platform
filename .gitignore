@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+
+# Environment & secrets
+.env
+.env.local
+.env.production
+
+# Database (SQLite dev files)
+*.db
+*.db-shm
+*.db-wal
+
+# ML models (large binary files – store in S3/DVC instead)
+models/*.pkl
+models/*.joblib
+
+# Generated data
+data/*.csv
+
+# Node / frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.env.local
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/settings.json
+.idea/
+
+# Logs
+*.log
+logs/
